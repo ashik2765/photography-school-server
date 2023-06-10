@@ -26,6 +26,34 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
+
+
+    const classesCollection = client.db("campDB").collection("classes");
+    const instructorCollection = client.db("campDB").collection("instructor");
+    const cartCollection = client.db("campDB").collection("carts");
+
+
+    //apis
+    app.get('/classes', async (req, res) => {
+      const result = await classesCollection.find().toArray();
+      res.send(result);
+    })
+    app.get('/instructor', async (req, res) => {
+      const result = await instructorCollection.find().toArray();
+      res.send(result);
+    })
+
+
+    //added cart collection
+    app.post('/carts', async (req, res) => {
+      const item = req.body;
+      console.log(item);
+      const result = await cartCollection.insertOne(item);
+      res.send(result)
+    })
+
+
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
@@ -39,9 +67,9 @@ run().catch(console.dir);
 
 
 app.get('/', (req, res) => {
-    res.send('summer camp server is running')
+  res.send('summer camp server is running')
 })
 
 app.listen(port, () => {
-    console.log(`summer camp is running on port${port}`);
+  console.log(`summer camp is running on port${port}`);
 })

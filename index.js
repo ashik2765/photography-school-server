@@ -28,10 +28,18 @@ async function run() {
     await client.connect();
 
 
+    const usersCollection = client.db("campDB").collection("users");
     const classesCollection = client.db("campDB").collection("classes");
     const instructorCollection = client.db("campDB").collection("instructor");
     const cartCollection = client.db("campDB").collection("carts");
 
+
+    //users apis
+    app.post('/users', async (req, res) => {
+      const user = req.body;
+      const result = await usersCollection.insertOne(user);
+      res.send(result);
+    })
 
     //apis
     app.get('/classes', async (req, res) => {
@@ -57,7 +65,6 @@ async function run() {
 
     app.post('/carts', async (req, res) => {
       const item = req.body;
-      console.log(item);
       const result = await cartCollection.insertOne(item);
       res.send(result)
     })

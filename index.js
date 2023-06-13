@@ -97,7 +97,7 @@ async function run() {
       const email = req.params.email;
 
       if (req.decoded.email !== email) {
-        res.send({ admin: false })
+        return res.send({ admin: false })
       }
       const query = { email: email }
       const user = await usersCollection.findOne(query);
@@ -108,7 +108,7 @@ async function run() {
       const email = req.params.email;
 
       if (req.decoded.email !== email) {
-        res.send({
+        return res.send({
           instructor: false
         })
       }

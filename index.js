@@ -50,6 +50,7 @@ async function run() {
     const classesCollection = client.db("campDB").collection("classes");
     const instructorCollection = client.db("campDB").collection("instructor");
     const cartCollection = client.db("campDB").collection("carts");
+    const paymentCollection = client.db("campDB").collection("payments");
 
     //JWT and verify related API's
     //verfy token
@@ -170,13 +171,13 @@ async function run() {
     //Class Approved related API
     app.patch('/classes/:id', async (req, res) => {
       const id = req.params.id;
-    
+
       try {
         const filter = { _id: new ObjectId(id), status: 'pending' };
         const updateDoc = { $set: { status: 'approved' } };
-    
+
         const result = await classesCollection.updateOne(filter, updateDoc);
-    
+
         if (result.modifiedCount) {
           res.json({ success: true });
         } else {
@@ -189,13 +190,13 @@ async function run() {
     //denied
     app.patch('/classes/denied/:id', async (req, res) => {
       const id = req.params.id;
-    
+
       try {
         const filter = { _id: new ObjectId(id), status: 'pending' };
         const updateDoc = { $set: { status: 'denied' } };
-    
+
         const result = await classesCollection.updateOne(filter, updateDoc);
-    
+
         if (result.modifiedCount) {
           res.json({ success: true });
         } else {
@@ -205,7 +206,7 @@ async function run() {
         res.status(500).json({ success: false, message: 'An error occurred' });
       }
     });
-    
+
 
     app.get('/instructor', async (req, res) => {
       const result = await instructorCollection.find().toArray();
@@ -229,7 +230,7 @@ async function run() {
       res.send(result);
     })
 
-    
+
 
     app.post('/carts', async (req, res) => {
       const item = req.body;
@@ -246,7 +247,7 @@ async function run() {
     })
 
     //payment 
-    app.post('/create-payment-intent',verifyJWT, async (req, res) => {
+    app.post('/create-payment-intent', verifyJWT, async (req, res) => {
       const { price } = req.body;
       const amount = price * 100;
       const paymentIntent = await stripe.paymentIntents.create({
@@ -258,6 +259,13 @@ async function run() {
       res.send({
         clientSecret: paymentIntent.client_secret,
       })
+    })
+
+    //post payment data to the mongodb
+    app.post('/payments', verifyJWT, async (req, res) => {
+      const payment = req.body;
+      const result = await paymentCollection.insertOne(payment);
+      res.send(result);
     })
 
 

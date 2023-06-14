@@ -51,13 +51,15 @@ async function run() {
     const instructorCollection = client.db("campDB").collection("instructor");
     const cartCollection = client.db("campDB").collection("carts");
 
-    //JWT api
+    //JWT and verify related API's
+    //verfy token
     app.post('/jwt', (req, res) => {
       const user = req.body;
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
       res.send({ token })
     })
 
+    //Verify Admin
     const verifyAdmin = async (req, res, next) => {
       const email = req.decoded.email;
       const query = { email: email }
@@ -67,6 +69,8 @@ async function run() {
       }
       next();
     }
+
+    //verfy Instructor
     const verifyInstructor = async (req, res, next) => {
       const email = req.decoded.email;
       const query = { email: email }
@@ -76,11 +80,17 @@ async function run() {
       }
       next();
     }
-    //users apis
+
+
+    //Users related API's
+
+    //Get users
     app.get('/users', verifyJWT, verifyAdmin, async (req, res) => {
       const result = await usersCollection.find().toArray();
       res.send(result);
     })
+
+    //post users
     app.post('/users', async (req, res) => {
       const user = req.body;
       const query = { email: user.email }
@@ -92,7 +102,9 @@ async function run() {
       res.send(result);
     })
 
-    //make admin and instructor api
+    //Make Admin and Instructor API's
+
+    //Admin
     app.get('/users/admin/:email', verifyJWT, async (req, res) => {
       const email = req.params.email;
 
@@ -104,6 +116,8 @@ async function run() {
       const result = { admin: user?.role === 'admin' }
       res.send(result)
     })
+
+    //Instructors
     app.get('/users/instructor/:email', verifyJWT, async (req, res) => {
       const email = req.params.email;
 
@@ -119,6 +133,7 @@ async function run() {
     })
 
 
+    //Set User's role
     app.patch('/users/:role/:id', async (req, res) => {
       const role = req.params.role;
       const id = req.params.id;
@@ -140,7 +155,7 @@ async function run() {
     });
 
 
-    //apis
+    //Popular Section related API's
     app.get('/classes', async (req, res) => {
       const result = await classesCollection.find().toArray();
       res.send(result);
@@ -151,6 +166,46 @@ async function run() {
       const result = await classesCollection.insertOne(newItem)
       res.send(result);
     })
+
+    //Class Approved related API
+    app.patch('/classes/:id', async (req, res) => {
+      const id = req.params.id;
+    
+      try {
+        const filter = { _id: new ObjectId(id), status: 'pending' };
+        const updateDoc = { $set: { status: 'approved' } };
+    
+        const result = await classesCollection.updateOne(filter, updateDoc);
+    
+        if (result.modifiedCount) {
+          res.json({ success: true });
+        } else {
+          res.json({ success: false, message: 'Failed to update class status' });
+        }
+      } catch (error) {
+        res.status(500).json({ success: false, message: 'An error occurred' });
+      }
+    });
+    //denied
+    app.patch('/classes/denied/:id', async (req, res) => {
+      const id = req.params.id;
+    
+      try {
+        const filter = { _id: new ObjectId(id), status: 'pending' };
+        const updateDoc = { $set: { status: 'denied' } };
+    
+        const result = await classesCollection.updateOne(filter, updateDoc);
+    
+        if (result.modifiedCount) {
+          res.json({ success: true });
+        } else {
+          res.json({ success: false, message: 'Failed to update class status' });
+        }
+      } catch (error) {
+        res.status(500).json({ success: false, message: 'An error occurred' });
+      }
+    });
+    
 
     app.get('/instructor', async (req, res) => {
       const result = await instructorCollection.find().toArray();
@@ -174,10 +229,7 @@ async function run() {
       res.send(result);
     })
 
-    // app.get('/carts', async (req, res) => {
-    //   const result = await cartCollection.find().toArray();
-    //   res.send(result);
-    // })
+    
 
     app.post('/carts', async (req, res) => {
       const item = req.body;

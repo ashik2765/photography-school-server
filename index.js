@@ -261,12 +261,29 @@ async function run() {
       })
     })
 
-    //post payment data to the mongodb
+    
     app.post('/payments', verifyJWT, async (req, res) => {
-      const payment = req.body;
-      const result = await paymentCollection.insertOne(payment);
+      try {
+        const payment = req.body;
+        const id = payment.cart[0]?._id;
+        
+        const result = await paymentCollection.insertOne(payment);
+        const query = { _id: new ObjectId(id) };
+        const deleteResult = await cartCollection.deleteOne(query);
+
+        res.send({ result, deleteResult });
+      } catch (error) {
+        res.status(500).send({ error: 'An error occurred while deleting data from cartCollection.' });
+      }
+    });
+
+    app.get('/payments', async (req, res) => {
+      const result = await paymentCollection.find().toArray();
       res.send(result);
     })
+
+
+
 
 
 
